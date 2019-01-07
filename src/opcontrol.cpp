@@ -80,16 +80,14 @@ void opcontrol() {
 	//Initalze timers
 	Timer ButtonPressTimer = Timer();
 	ButtonPressTimer.resetTimer();
-	Timer T2 = Timer();
-	T2.resetTimer();
-	Timer T3 = Timer();
-	T3.resetTimer();
+	Timer FlipperControl = Timer();
+	FlipperControl.resetTimer();
 	Timer SlueTimer = Timer();
 	SlueTimer.resetTimer();
 
 	// Drive reversal and flipper control variables
 	bool driveDirection = true;
-	bool holdFlip = true;
+	bool holdFlip = false;
 	int flipperPower = 0;
 
 	// Proportion lift control variables
@@ -127,19 +125,21 @@ void opcontrol() {
 		L1 = 0;
 
 		// Check for drive direction update
-		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && driveDirection && T1.getTime() > _buttonPressTime){
+		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && driveDirection &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
 			// Change drive direction to reverse
 			driveDirection = false;
 
 			// Reset button press timer
-			T1.resetTimer();
+			ButtonPressTimer.resetTimer();
 		}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !driveDirection && T1.getTime() > _buttonPressTime){
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !driveDirection &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
 			// Normalizes the drive direciton
 			driveDirection = true;
 
 			// Reset button press timer
-			T1.resetTimer();
+			ButtonPressTimer.resetTimer();
 		}
 
 		// Set base and lift motors accordinly
@@ -168,55 +168,97 @@ void opcontrol() {
 		}
 
 		//Flipper Control
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && holdFlip && T2.getTime() > _buttonPressTime){
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && holdFlip &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
+			//Set variable to unhold flipper
 			holdFlip = false;
-			T2.resetTimer();
-			T3.resetTimer();
+
+			//Reset Timers
+			ButtonPressTimer.resetTimer();
+			FlipperControl.resetTimer();
 			SlueTimer.resetTimer();
 		}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && !holdFlip && T2.getTime() > _buttonPressTime){
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && !holdFlip &&
+	  ButtonPressTimer.getTime() > _buttonPressTime){
+			//Set variable to unhold flipper
 			holdFlip = true;
-			T2.resetTimer();
-			T3.resetTimer();
+
+			//Reset Timers
+			ButtonPressTimer.resetTimer();
+			FlipperControl.resetTimer();
 			SlueTimer.resetTimer();
 		}
 
-		if (!holdFlip){
-			if(T3.getTime() < 450){
+		//Checks if flipper needs to be held
+		if (holdFlip){
+			//Uses timer to move up for 500 ms
+			if(FlipperControl.getTime() < 500){
+				//Moves motor full power
 				Flipper.move(127);
 			}
+			//Holds flipper at the top after flip
 			else{
+				//Sets the flipper power to slue timer, which
+				//slowly ramps up the motor hold power to prevent
+				//motor and port burnout from exessive current
 				flipperPower = SlueTimer.getTime() * 3;
+
+				//Sets a limit to the flipper power
 				if (flipperPower > 750){
 					flipperPower = 750;
 				}
+
+				//Moves the flipper motor through volate to limit
+				//the torque output
 				Flipper.move_voltage(flipperPower);
 			}
 		}
 
-		else if (holdFlip){
-			flipperPower = SlueTimer.getTime() - 61;
-			if (SlueTimer.getTime() >= 61){
+		//Moves the flipper down
+		else if (!holdFlip){
+			//Slue flipper movement down to prevent an imediate
+			//loss of current
+			flipperPower = SlueTimer.getTime() - 60;
+
+			//Sets flipper power limit
+			if (SlueTimer.getTime() >= 60){
 				flipperPower = 0;
 			}
-			Flipper.move(flipperPower);
 
+			//Moves flipper normaly because there is no hold
+			Flipper.move(flipperPower);
 		}
 
-		//Lift Control
+		//Proportional lift control that holds the lift where
+		//it was last left at. Checks for when the the lift joystick
+		//is not being moved
 		if (abs(L1) <= deadzone){
+			//Sets lift error to tartget value (set from moving the lift,
+			//but by defult is 0) minus its current position
 			liftError = liftTarget - Lift.get_position();
+
+			//If error is nothing stops moving lift to prevent unnecisarry
+			//movement of the lift
 			if (abs(liftError) == 0){
 				liftError = 0;
 			}
+
+			//Sets lift adjustment power to the error times the constant
+			//of proportion
 			L1 = liftError * lift_Kp;
 			Lift.move(L1);
 		}
+
+		//Checks for when the joysticks are being moved past the deadzones
 		else if (abs(L1) > deadzone){
+			//Moves the lift corrisponding to the joystick position
 			Lift.move(L1);
+
+			//Sets lift target to its current position
 			liftTarget = Lift.get_position();
 		}
 
+		//Dont wanna stress out the poor brain do we
 		delay(20);
 	}
 }
