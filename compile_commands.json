@@ -63,11 +63,11 @@
             "-fdiagnostics-color",
             "--std=gnu++17",
             "-o",
-            "bin/initialize.cpp.o",
-            "src\\initialize.cpp"
+            "bin/opcontrol.cpp.o",
+            "src\\opcontrol.cpp"
         ],
         "directory": "H:\\2018-2019 Turning Point\\V5 Code\\6403A Turning Point",
-        "file": "src\\initialize.cpp"
+        "file": "src\\opcontrol.cpp"
     },
     {
         "arguments": [
@@ -98,10 +98,10 @@
             "-fdiagnostics-color",
             "--std=gnu++17",
             "-o",
-            "bin/opcontrol.cpp.o",
-            "src\\opcontrol.cpp"
+            "bin/initialize.cpp.o",
+            "src\\initialize.cpp"
         ],
         "directory": "H:\\2018-2019 Turning Point\\V5 Code\\6403A Turning Point",
-        "file": "src\\opcontrol.cpp"
+        "file": "src\\initialize.cpp"
     }
 ]
