@@ -1,73 +1,6 @@
 #include "main.h"
 #include "robot/motors.h"
-
-class Timer{
-private:
-	int zeroTime = millis();
-
-public:
-	int getTime (){
-		int currentTime = millis();
-		int timerCount = currentTime - zeroTime;
-		return timerCount;
-	}
-
-	void resetTimer (){
-		zeroTime = millis();
-	}
-};
-
-//The main medthod for the auto reload control
-void reloadPuncher(void*){
-	//Start an infinate loop to check for new button press
-	while(true){
-		//When butotn is pressed start the sequence
-		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)){
-			//Initialize iteration variable
-			int i = 0;
-
-			//Runs the puncher until the current draw dips and
-			//until the 120th iteration to prevent the loop ending
-			//when the current draw is low due to motor starting to spin
-			while(true){
-				//Moves puncher back and reset encoder position in
-				//preperation for next procedure
-				Puncher.move(127);
-				Puncher.tare_position();
-
-				//Adds one to iteration counter
-				i++;
-
-				//Checks if needs to break out of loop
-				if (Puncher.get_current_draw() < 300 && i > 120)
-					break;
-
-				///Dont wanna stress out the poor brain dont we
-				delay(2);
-			}
-
-			//Cock backs the puncher until it is about to shoot
-			//again, so the puncher is ready to fire instantly
-			while (true){
-				//Moves puncher back
-				Puncher.move(127);
-
-				//Checks if needs to break out of loop
-				if (fabs(Puncher.get_position()) > 825)
-					break;
-
-				//Dont wanna stress out the poor brain dont we
-				delay(2);
-			}
-			//Stops puncher from moving once it is out of the
-			//auto reload procedure
-			Puncher.move(0);
-		}
-
-		//Dont wanna stress out the poor brain do we
-		delay(20);
-	}
-}
+#include "robot/robot_functions.hpp"
 
 //User control method
 void opcontrol() {
@@ -94,7 +27,7 @@ void opcontrol() {
 
 	// Proportion flipper hold control variables
 	int flipError = 0;
-	int flipTarget = 30;
+	int flipTarget = 100;
 	float flip_Kp = 0.5;
 
 	// Deadzone variables for base control
