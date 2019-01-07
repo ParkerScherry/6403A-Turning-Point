@@ -1,15 +1,5 @@
 #include "main.h"
-
-//Define and initialize gyroscope
-ADIGyro gyro (8);
-
-//Define "jumper clips"
-ADIDigitalIn A (1);
-ADIDigitalIn B (2);
-ADIDigitalIn C (3);
-ADIDigitalIn D (4);
-ADIDigitalIn E (5);
-ADIDigitalIn F (6);
+#include "robot/motors.h"
 
 //Function that returns which autonomous is selected
 //based on what jumpers are in which port. This allows

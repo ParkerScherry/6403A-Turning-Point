@@ -1,16 +1,5 @@
 #include "main.h"
-//#include "initialize.cpp"
-//#include "motors.h"
-
-Motor FrontLeftDrive (7, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_COUNTS);
-Motor FrontRightDrive (10, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
-Motor BackLeftDrive (12, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
-Motor BackRightDrive (1, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_COUNTS);
-Motor Lift (3, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
-Motor Intake (20, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
-Motor Puncher (6, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
-Motor Flipper (14, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);
-Controller master (E_CONTROLLER_MASTER);
+#include "robot/motors.h"
 
 class Timer{
 private:

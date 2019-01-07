@@ -1,20 +1,5 @@
 #include "main.h"
-
-extern Motor FrontLeftDrive;
-extern Motor FrontRightDrive;
-extern Motor BackLeftDrive;
-extern Motor BackRightDrive;
-extern Motor Lift;
-extern Motor Intake;
-extern Motor Puncher;
-extern Motor Flipper;
-extern ADIGyro gyro;
-extern ADIDigitalIn A;
-extern ADIDigitalIn C;
-extern ADIDigitalIn D;
-extern ADIDigitalIn E;
-extern ADIDigitalIn F;
-extern ADIDigitalIn G;
+#include "robot/motors.h"
 
 extern int getAutonomous();
 
@@ -580,7 +565,7 @@ void autonomous() {
 
     }
     case 12:{
-      
+
     }
   }
 }
