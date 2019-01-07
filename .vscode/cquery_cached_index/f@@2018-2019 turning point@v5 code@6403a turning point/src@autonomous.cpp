@@ -290,14 +290,13 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
   //Constants for Axial Movement
   const float Kp = 0.2;
   const float Kp_C = 1;
-  const float Ki = 0.1; //can be a very small value and to disable set to 0.1*10^-10
+  const float Ki = 0.1;
   const float Kd = 0.5;
 
   //Constants for Turing
-  const float Kp_turn = 0.2; //.4
-  const float Kp_C_turn = 0.0; //.1
-  const float Ki_turn = 0.1; //.1
-  const float Kd_turn = 0.4; //.2
+  const float Kp_turn = 0.2;
+  const float Ki_turn = 0.1;
+  const float Kd_turn = 0.4;
 
   //PID Variables
   float error;
@@ -324,12 +323,15 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
   resetSensors();
   Timer endLoopTimer = Timer();
   endLoopTimer.resetTimer();
+
+  //Set minimum wait time
   if (waitTime <= 250){
     waitTime = 250;
   }
 
-
+  //Check for axial movement
   if (direction == "north" || direction == "south"){
+    //Infinate loop
     while (true){
       //Proportion control
       error = inchToTicks(target) - (leftEncoderSum() + rightEncoderSum());
@@ -358,7 +360,7 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
       if (error == 0)
       derivative = 0;
 
-      //Set motor powers
+      //Set final power
       finalPower = proportion + integral + derivative;
 
       if (abs(finalPower) > maxPower){
@@ -368,7 +370,7 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
         finalPower = sgn(finalPower) * (abs(finalPower) + 15);
       }
 
-
+      //Move motors
       if (direction == "north")
       driveSet(finalPower - proportion_drift, finalPower + proportion_drift);
       else if (direction == "south")
@@ -378,30 +380,25 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
       if (error < 100){
         timerLock = false;
       }
-
       if (timerLock){
         endLoopTimer.resetTimer();
       }
-
       if (endLoopTimer.getTime() >= waitTime){
         break;
       }
 
-      lcd::set_text(1, std::to_string(abs(leftEncoderSum()) + abs(rightEncoderSum())));
       //Dont wanna over load the poor CPU now do we
       delay(20);
     }
   }
 
+  //Check for turning
   else if (direction == "left" || direction == "right"){
+    //Infinate loop
     while (true){
       //Proportion control
       error = fabs(target * 10) - fabs(gyro.get_value());
       proportion = Kp_turn * error;
-
-      //Drift control
-      error_drift = (leftEncoderSum() + 120) - rightEncoderSum();
-      proportion_drift = Kp_C_turn * error_drift;
 
       //Integral control
       if (fabs(error) < integralActiveZone && fabs(error) != 0)
@@ -422,7 +419,7 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
       if (error == 0)
       derivative = 0;
 
-      //Set motor powers
+      //Set final power
       finalPower = proportion + integral + derivative;
 
       if (abs(finalPower) > maxPower){
@@ -432,7 +429,7 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
         finalPower = sgn(finalPower) * (abs(finalPower) + 15);
       }
 
-
+      //Move motors
       if (direction == "left")
       driveSet(-finalPower - proportion_drift, finalPower + proportion_drift);
       else if (direction == "right")
@@ -451,19 +448,15 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
         break;
       }
 
-      // lcd::set_text(1, "Target: " + std::to_string(target * 10));
-      // lcd::set_text(2, "Sensor: " + std::to_string(gyro.get_value()));
-      // lcd::set_text(3, "P= " + std::to_string(proportion) + " I= " + std::to_string(integral) + " D= " + std::to_string(derivative));
-      // lcd::set_text(4, "Power: " + std::to_string(finalPower));
-      // lcd::set_text(5, "Time: " + std::to_string(waitTime - endLoopTimer.getTime()));
-      // lcd::set_text(6, "Error: " + std::to_string(error/10) + " degrees");
       //Dont wanna over load the poor CPU now do we
       delay(20);
     }
   }
 
+  //Checks for lateral movement
   if (direction == "east" || direction == "west"){
     while(true){
+      //Proportion control
       error = inchToTickStrafe(target) - (leftEncoderSum() + rightEncoderSum());
       proportion = Kp * error;
 
@@ -490,7 +483,7 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
       if (error == 0)
       derivative = 0;
 
-      //Set motor powers
+      //Set final power
       finalPower = proportion + integral + derivative;
 
       if (abs(finalPower) > maxPower){
@@ -500,6 +493,7 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
         finalPower = sgn(finalPower) * (abs(finalPower) + 15);
       }
 
+      //Move motors
       driveSet(-finalPower - proportion_drift, -finalPower + proportion_drift);
       if (direction == "west"){
         FrontLeftDrive.move(-finalPower - proportion_drift);
@@ -518,30 +512,27 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
       if (error < 100){
         timerLock = false;
       }
-
       if (timerLock){
         endLoopTimer.resetTimer();
       }
-
       if (endLoopTimer.getTime() >= waitTime){
         break;
       }
 
-      lcd::set_text(1, std::to_string(abs(leftEncoderSum()) + abs(rightEncoderSum())));
       //Dont wanna over load the poor CPU now do we
       delay(20);
     }
-
   }
-
   //Turn off the drive
   driveSet(0, 0);
 }
 
 void autonomous() {
-  //Make the puncher a thing
-  Task foo (reloadPuncherAuton);
+  //Start tasks to control puncher and lift
+  Task reloadPuncherAutonTask (reloadPuncherAuton);
+  Task liftTask (liftControl);
 
+  //All autons go here
   switch (getAutonomous()){
     case 1:{
 
@@ -577,8 +568,7 @@ void autonomous() {
 
     }
     case 12:{
-      lcd::clear_line(1);
-      drive(north, 25, 1000);
+      
     }
   }
 }
