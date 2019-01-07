@@ -28,63 +28,87 @@ public:
 	}
 };
 
+//The main medthod for the auto reload control
 void reloadPuncher(void*){
+	//Start an infinate loop to check for new button press
 	while(true){
+		//When butotn is pressed start the sequence
 		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)){
+			//Initialize iteration variable
 			int i = 0;
-			int ii = 0;
-			while(true){
-				Puncher.move(127);
-				delay(2);
-				Puncher.tare_position();
-				if (Puncher.get_current_draw() < 300 && i > 120){
-					break;
-				}
-				i++;
-			}
-			while (true){
-				Puncher.move(127);
-				delay(2);
 
-				if (fabs(Puncher.get_position()) > 825){
-					break;
-				}
+			//Runs the puncher until the current draw dips and
+			//until the 120th iteration to prevent the loop ending
+			//when the current draw is low due to motor starting to spin
+			while(Puncher.get_current_draw() < 300 && i > 120){
+				//Moves puncher back and reset encoder position in
+				//preperation for next procedure
+				Puncher.move(127);
+				Puncher.tare_position();
+
+				//Adds one to iteration counter
+				i++;
+
+				///Dont wanna stress out the poor brain dont we
+				delay(2);
 			}
+
+			//Cock backs the puncher until it is about to shoot
+			//again, so the puncher is ready to fire instantly
+			while (fabs(Puncher.get_position()) > 825){
+				//Moves puncher back
+				Puncher.move(127);
+
+				//Dont wanna stress out the poor brain dont we
+				delay(2);
+			}
+			//Stops puncher from moving once it is out of the
+			//auto reload procedure
 			Puncher.move(0);
 		}
+
+		//Dont wanna stress out the poor brain do we
 		delay(20);
 	}
 }
 
+//User control method
 void opcontrol() {
+	//Button press time
 	const int _buttonPressTime = 250;
-	Timer T1 = Timer();
-	T1.resetTimer();
+
+	//Initalze timers
+	Timer ButtonPressTimer = Timer();
+	ButtonPressTimer.resetTimer();
 	Timer T2 = Timer();
 	T2.resetTimer();
 	Timer T3 = Timer();
 	T3.resetTimer();
 	Timer SlueTimer = Timer();
 	SlueTimer.resetTimer();
+
+	// Drive reversal and flipper control variables
 	bool driveDirection = true;
 	bool holdFlip = true;
 	int flipperPower = 0;
-	//lcd::initialize();
-	Task foo (reloadPuncher);
-	//lcd::clear();
 
-	//Lift stuff
+	// Proportion lift control variables
 	int liftError = 0;
 	int liftTarget = 0;
 	float lift_Kp = 0.5;
+
+	// Deadzone variables for base control
+	const int deadzone = 10;
+	const int threshold = 30;
+	int X1 = 0, X2 = 0, Y1, L1 = 0;
+
+	//Starts reload puncher task which runs side by side with opcontrol
+	Task reloadPuncherTask (reloadPuncher);
+
+	//Infinate loop for usercontrol
 	while (true) {
 
-		// Deadzone variables for base control
-		const int deadzone = 10;
-		const int threshold = 30;
-		int X1 = 0, X2 = 0, Y1, L1 = 0;
-
-		// Check deadzones
+		// Check deadzones for base control
 		if (abs(master.get_analog(ANALOG_LEFT_X)) > deadzone)
 		X1 = master.get_analog(ANALOG_LEFT_X);
 		else
@@ -102,41 +126,30 @@ void opcontrol() {
 		else
 		L1 = 0;
 
-		// // Expo control for turing and lift
-		// if (abs(X1) > threshold){
-		// 	L1 = 0;
-		// 	if (X1 > 0)
-		// 	X1 = (pow((X1 / 100), 3) * 100) + 20;
-		// 	else
-		// 	X1 = (pow((X1 / 100), 3) * 100) - 20;
-		// }
-		// if (abs(L1) > threshold){
-		// 	if (L1 > 0)
-		// 	L1 = 127;
-		// 	else
-		// 	L1 = -127;
-		// }
-
-		// check for drive direction update
+		// Check for drive direction update
 		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && driveDirection && T1.getTime() > _buttonPressTime){
-			driveDirection = false; //lift forward
+			// Change drive direction to reverse
+			driveDirection = false;
+
+			// Reset button press timer
 			T1.resetTimer();
 		}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !driveDirection && T1.getTime() > _buttonPressTime){
-			driveDirection = true; //shooter forward
+			// Normalizes the drive direciton
+			driveDirection = true;
+
+			// Reset button press timer
 			T1.resetTimer();
 		}
-		// Set base and lift motors
+
+		// Set base and lift motors accordinly
 		if (driveDirection){
-			master.clear();
 			FrontLeftDrive.move(Y1 + X2 + X1);
 			FrontRightDrive.move(Y1 - X2 - X1);
 			BackLeftDrive.move(Y1 - X2 + X1);
 			BackRightDrive.move(Y1 + X2 - X1);
-
 		}
 		else if (!driveDirection){
-			master.set_text(1, 1, "DRIVE INVERTED!");
 			FrontLeftDrive.move(-(Y1 + X2 - X1));
 			FrontRightDrive.move(-(Y1 - X2 + X1));
 			BackLeftDrive.move(-(Y1 - X2 - X1));
