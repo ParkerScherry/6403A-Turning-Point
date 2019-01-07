@@ -34,18 +34,6 @@ public:
   }
 };
 
-/**
-* Runs the user autonomous code. This function will be started in its own task
-* with the default priority and stack size whenever the robot is enabled via
-* the Field Management System or the VEX Competition Switch in the autonomous
-* mode. Alternatively, this function may be called in initialize or opcontrol
-* for non-competition testing purposes.
-*
-* If the robot is disabled or communications is lost, the autonomous task
-* will be stopped. Re-enabling the robot will restart the task, not re-start it
-* from where it left off.
-*/
-
 int inchToTicks (float inch){
   int ticks;
   const int conversionFactor = 72;
@@ -133,11 +121,15 @@ void reloadPuncherAuton(void*){
       //Runs the puncher until the current draw dips and
       //until the 120th iteration to prevent the loop ending
       //when the current draw is low due to motor starting to spin
-      while(Puncher.get_current_draw() < 300 && i > 120){
+      while(true){
         //Moves puncher back and reset encoder position in
         //preperation for next procedure
         Puncher.move(127);
         Puncher.tare_position();
+
+        //Checks if needs to break out of loop
+        if (Puncher.get_current_draw() < 300 && i > 120)
+        break;
 
         //Adds one to iteration counter
         i++;
@@ -148,9 +140,13 @@ void reloadPuncherAuton(void*){
 
       //Cock backs the puncher until it is about to shoot
       //again, so the puncher is ready to fire instantly
-      while (fabs(Puncher.get_position()) > 825){
+      while (true){
         //Moves puncher back
         Puncher.move(127);
+
+        //Checks if needs to break out of loop
+        if (fabs(Puncher.get_position()) > 825)
+        break;
 
         //Dont wanna stress out the poor brain dont we
         delay(2);
@@ -183,7 +179,7 @@ void shootPuncher (bool intake = false){
 //Proportional lift control that holds the lift where
 //it was last left at. Uses the lift target variable to control
 int liftTarget = 0;
-bool toggleFlip = false;
+bool toggleFlip = true;
 void liftControl (void*){
   // Proportion lift control variables
   int liftError = 0;
@@ -191,9 +187,9 @@ void liftControl (void*){
   float lift_Kp = 0.5;
 
   // Proportion flipper hold control variables
-	int flipError = 0;
-	int flipTarget = 30;
-	float flip_Kp = 0.5;
+  int flipError = 0;
+  int flipTarget = 30;
+  float flip_Kp = 0.5;
 
   //Infite loop to constantly check if lift needs to be moved
   while(true){
@@ -214,7 +210,7 @@ void liftControl (void*){
 
     //Check if the lift is being raised and pitches the
     //flipper at an agle to keep from sliding off
-    if (Lift.get_position() > 40 && !toggleFlip){
+    if (Lift.get_position() > 40 && toggleFlip){
       //Calcuate the flip error from the set target value
       flipError = flipTarget - Flipper.get_position();
 
@@ -222,7 +218,7 @@ void liftControl (void*){
       Flipper.move(flipError * flip_Kp);
     }
     //Turns off flipper when lift is down and flipper is not up
-    else if (!toggleFlip){
+    else if (toggleFlip){
       Flipper.move(0);
     }
 
@@ -247,12 +243,16 @@ void flip (){
   //Checks if flipper needs to go up
   if (toggleFlip){
     //Uses timer to move up for 500 ms
-    if(FlipperControl.getTime() < 500){
+    while(FlipperControl.getTime() < 500){
       //Moves motor full power
       Flipper.move(127);
+
+      //Dont wanna over load the poor cortex now do we
+      delay(10);
     }
+
     //Holds flipper at the top after flip
-    else{
+    while(flipperPower != 750){
       //Sets the flipper power to slue timer, which
       //slowly ramps up the motor hold power to prevent
       //motor and port burnout from exessive current
@@ -266,22 +266,34 @@ void flip (){
       //Moves the flipper motor through volate to limit
       //the torque output
       Flipper.move_voltage(flipperPower);
+
+      //Dont wanna over load the poor cortex now do we
+      delay(10);
     }
+    //Reverses bool value
+    toggleFlip = false;
   }
 
   //Moves the flipper down
   else if (!toggleFlip){
     //Slue flipper movement down to prevent an imediate
     //loss of currents
-    flipperPower = SlueTimer.getTime() - 60;
+    while (SlueTimer.getTime() <= 60){
+      flipperPower = SlueTimer.getTime() - 60;
 
-    //Sets flipper power limit
-    if (SlueTimer.getTime() >= 60){
-      flipperPower = 0;
-    }
+      //Sets flipper power limit
+      if (SlueTimer.getTime() >= 60){
+        flipperPower = 0;
+      }
 
-    //Set flipper power to motor
+      //Set flipper power to motor
       Flipper.move(flipperPower);
+
+      //Dont wanna over load the poor cortex now do we
+      delay(10);
+    }
+    //Reverses bool value
+    toggleFlip = true;
   }
 }
 

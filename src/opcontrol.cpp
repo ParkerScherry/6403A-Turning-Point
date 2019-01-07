@@ -40,7 +40,7 @@ void reloadPuncher(void*){
 			//Runs the puncher until the current draw dips and
 			//until the 120th iteration to prevent the loop ending
 			//when the current draw is low due to motor starting to spin
-			while(Puncher.get_current_draw() < 300 && i > 120){
+			while(true){
 				//Moves puncher back and reset encoder position in
 				//preperation for next procedure
 				Puncher.move(127);
@@ -49,15 +49,23 @@ void reloadPuncher(void*){
 				//Adds one to iteration counter
 				i++;
 
+				//Checks if needs to break out of loop
+				if (Puncher.get_current_draw() < 300 && i > 120)
+					break;
+
 				///Dont wanna stress out the poor brain dont we
 				delay(2);
 			}
 
 			//Cock backs the puncher until it is about to shoot
 			//again, so the puncher is ready to fire instantly
-			while (fabs(Puncher.get_position()) > 825){
+			while (true){
 				//Moves puncher back
 				Puncher.move(127);
+
+				//Checks if needs to break out of loop
+				if (fabs(Puncher.get_position()) > 825)
+					break;
 
 				//Dont wanna stress out the poor brain dont we
 				delay(2);
@@ -236,8 +244,9 @@ void opcontrol() {
 				//Calcuate the flip error from the set target value
 				flipError = flipTarget - Flipper.get_position();
 
-				//Move the flipper accordingly
+				//Move the flipper accordingly and reset slue timer
 				Flipper.move(flipError * flip_Kp);
+				SlueTimer.resetTimer();
 			}
 			//Moves flipper normaly because there is no hold
 			else{
