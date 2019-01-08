@@ -2,8 +2,6 @@
 #include "motors.h"
 #include "robot_functions.hpp"
 
-/* ********** Timer Functions ********** */
-
 /* ********** Math Functions ********** */
 int inchToTicks (float inch){
   int ticks;
@@ -91,9 +89,9 @@ int getAutonomous(){
 }
 //Returns the autonomous name that selected from the
 //getAutonomous function
-std::string getAutonomousName(){
+string getAutonomousName(){
   //Initialize variable to be returned
-  std::string myAutonomousName;
+  string myAutonomousName;
   //Check each case for the variable returned from the
   //function and sets a respective name for it
   switch (getAutonomous()){
@@ -363,7 +361,7 @@ void flip (){
 }
 
 //The PID contorl function
-void drive (std::string direction, float target, float waitTime, int maxPower){
+void drive (string direction, float target, float waitTime, int maxPower){
   //Constants for Axial Movement
   const float Kp = 0.2;
   const float Kp_C = 1;

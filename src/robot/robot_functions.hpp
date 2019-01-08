@@ -1,5 +1,12 @@
 #include "main.h"
 
+const string north = "north";
+const string south = "south";
+const string east = "east";
+const string west = "west";
+const string left = "left";
+const string right = "right";
+
 //Timer
 class Timer{
 private:
@@ -40,4 +47,5 @@ void drive (std::string direction, float target, float waitTime, int maxPower = 
 
 //Auton Selection Functions
 int getAutonomous();
-std::string getAutonomousName();
+string getAutonomousName();
+void displayAuton(void*);
