@@ -1,0 +1,7 @@
+#include "main.h"
+#include "blue_back.h"
+#include "blue_front.h"
+#include "red_back.h"
+#include "red_front.h"
+#include "skills.h"
+#include "test.h"
