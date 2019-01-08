@@ -1,90 +1,47 @@
 #include "main.h"
-//#include "initialize.cpp"
-//#include "motors.h"
+#include "robot/motors.h"
+#include "robot/robot_functions.hpp"
 
-Motor FrontLeftDrive (7, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_COUNTS);
-Motor FrontRightDrive (10, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
-Motor BackLeftDrive (12, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
-Motor BackRightDrive (1, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_COUNTS);
-Motor Lift (3, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
-Motor Intake (20, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
-Motor Puncher (6, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
-Motor Flipper (14, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);
-Controller master (E_CONTROLLER_MASTER);
-
-class Timer{
-private:
-	int zeroTime = millis();
-
-public:
-	int getTime (){
-		int currentTime = millis();
-		int timerCount = currentTime - zeroTime;
-		return timerCount;
-	}
-
-	void resetTimer (){
-		zeroTime = millis();
-	}
-};
-
-void reloadPuncher(void*){
-	while(true){
-		if (master.get_digital(E_CONTROLLER_DIGITAL_L2)){
-			int i = 0;
-			int ii = 0;
-			while(true){
-				Puncher.move(127);
-				delay(2);
-				Puncher.tare_position();
-				if (Puncher.get_current_draw() < 300 && i > 120){
-					break;
-				}
-				i++;
-			}
-			while (true){
-				Puncher.move(127);
-				delay(2);
-
-				if (fabs(Puncher.get_position()) > 825){
-					break;
-				}
-			}
-			Puncher.move(0);
-		}
-		delay(20);
-	}
-}
-
+//User control method
 void opcontrol() {
+	//Button press time
 	const int _buttonPressTime = 250;
-	Timer T1 = Timer();
-	T1.resetTimer();
-	Timer T2 = Timer();
-	T2.resetTimer();
-	Timer T3 = Timer();
-	T3.resetTimer();
+
+	//Initalze timers
+	Timer ButtonPressTimer = Timer();
+	ButtonPressTimer.resetTimer();
+	Timer FlipperControl = Timer();
+	FlipperControl.resetTimer();
 	Timer SlueTimer = Timer();
 	SlueTimer.resetTimer();
-	bool driveDirection = true;
-	bool holdFlip = true;
-	int flipperPower = 0;
-	//lcd::initialize();
-	Task foo (reloadPuncher);
-	//lcd::clear();
 
-	//Lift stuff
+	// Drive reversal and flipper control variables
+	bool driveDirection = true;
+	bool toggleFlip = false;
+	int flipperPower = 0;
+
+	// Proportion lift control variables
 	int liftError = 0;
 	int liftTarget = 0;
 	float lift_Kp = 0.5;
+
+	// Proportion flipper hold control variables
+	int flipError = 0;
+	int flipTarget = 100;
+	float flip_Kp = 0.5;
+
+	// Deadzone variables for base control
+	const int deadzone = 10;
+	const int threshold = 30;
+	int X1 = 0, X2 = 0, Y1, L1 = 0;
+
+	//Starts reload puncher task which runs side by side with opcontrol
+	Task reloadPuncherTask (reloadPuncher);
+
+	//Infinate loop for usercontrol
 	while (true) {
 
-		// Deadzone variables for base control
-		const int deadzone = 10;
-		const int threshold = 30;
-		int X1 = 0, X2 = 0, Y1, L1 = 0;
-
-		// Check deadzones
+		// Check deadzones for base control
 		if (abs(master.get_analog(ANALOG_LEFT_X)) > deadzone)
 		X1 = master.get_analog(ANALOG_LEFT_X);
 		else
@@ -102,41 +59,32 @@ void opcontrol() {
 		else
 		L1 = 0;
 
-		// // Expo control for turing and lift
-		// if (abs(X1) > threshold){
-		// 	L1 = 0;
-		// 	if (X1 > 0)
-		// 	X1 = (pow((X1 / 100), 3) * 100) + 20;
-		// 	else
-		// 	X1 = (pow((X1 / 100), 3) * 100) - 20;
-		// }
-		// if (abs(L1) > threshold){
-		// 	if (L1 > 0)
-		// 	L1 = 127;
-		// 	else
-		// 	L1 = -127;
-		// }
+		// Check for drive direction update
+		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && driveDirection &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
+			// Change drive direction to reverse
+			driveDirection = false;
 
-		// check for drive direction update
-		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && driveDirection && T1.getTime() > _buttonPressTime){
-			driveDirection = false; //lift forward
-			T1.resetTimer();
+			// Reset button press timer
+			ButtonPressTimer.resetTimer();
 		}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !driveDirection && T1.getTime() > _buttonPressTime){
-			driveDirection = true; //shooter forward
-			T1.resetTimer();
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !driveDirection &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
+			// Normalizes the drive direciton
+			driveDirection = true;
+
+			// Reset button press timer
+			ButtonPressTimer.resetTimer();
 		}
-		// Set base and lift motors
+
+		// Set base and lift motors accordinly
 		if (driveDirection){
-			master.clear();
 			FrontLeftDrive.move(Y1 + X2 + X1);
 			FrontRightDrive.move(Y1 - X2 - X1);
 			BackLeftDrive.move(Y1 - X2 + X1);
 			BackRightDrive.move(Y1 + X2 - X1);
-
 		}
 		else if (!driveDirection){
-			master.set_text(1, 1, "DRIVE INVERTED!");
 			FrontLeftDrive.move(-(Y1 + X2 - X1));
 			FrontRightDrive.move(-(Y1 - X2 + X1));
 			BackLeftDrive.move(-(Y1 - X2 - X1));
@@ -155,55 +103,109 @@ void opcontrol() {
 		}
 
 		//Flipper Control
-		if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && holdFlip && T2.getTime() > _buttonPressTime){
-			holdFlip = false;
-			T2.resetTimer();
-			T3.resetTimer();
+		if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && toggleFlip &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
+			//Set variable to unhold flipper
+			toggleFlip = false;
+
+			//Reset Timers
+			ButtonPressTimer.resetTimer();
+			FlipperControl.resetTimer();
 			SlueTimer.resetTimer();
 		}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && !holdFlip && T2.getTime() > _buttonPressTime){
-			holdFlip = true;
-			T2.resetTimer();
-			T3.resetTimer();
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && !toggleFlip &&
+	  ButtonPressTimer.getTime() > _buttonPressTime){
+			//Set variable to unhold flipper
+			toggleFlip = true;
+
+			//Reset Timers
+			ButtonPressTimer.resetTimer();
+			FlipperControl.resetTimer();
 			SlueTimer.resetTimer();
 		}
 
-		if (!holdFlip){
-			if(T3.getTime() < 450){
+		//Checks if flipper needs to go up
+		if (toggleFlip){
+			//Uses timer to move up for 500 ms
+			if(FlipperControl.getTime() < 500){
+				//Moves motor full power
 				Flipper.move(127);
 			}
+			//Holds flipper at the top after flip
 			else{
+				//Sets the flipper power to slue timer, which
+				//slowly ramps up the motor hold power to prevent
+				//motor and port burnout from exessive current
 				flipperPower = SlueTimer.getTime() * 3;
+
+				//Sets a limit to the flipper power
 				if (flipperPower > 750){
 					flipperPower = 750;
 				}
+
+				//Moves the flipper motor through volate to limit
+				//the torque output
 				Flipper.move_voltage(flipperPower);
 			}
 		}
 
-		else if (holdFlip){
-			flipperPower = SlueTimer.getTime() - 61;
-			if (SlueTimer.getTime() >= 61){
+		//Moves the flipper down
+		else if (!toggleFlip){
+			//Slue flipper movement down to prevent an imediate
+			//loss of currents
+			flipperPower = SlueTimer.getTime() - 60;
+
+			//Sets flipper power limit
+			if (SlueTimer.getTime() >= 60){
 				flipperPower = 0;
 			}
-			Flipper.move(flipperPower);
 
+			//Check if the lift is being raised and pitches the
+			//flipper at an agle to keep from sliding off
+			if (Lift.get_position() > 40){
+				//Calcuate the flip error from the set target value
+				flipError = flipTarget - Flipper.get_position();
+
+				//Move the flipper accordingly and reset slue timer
+				Flipper.move(flipError * flip_Kp);
+				SlueTimer.resetTimer();
+			}
+			//Moves flipper normaly because there is no hold
+			else{
+				Flipper.move(flipperPower);
+			}
 		}
 
-		//Lift Control
+		//Proportional lift control that holds the lift where
+		//it was last left at. Checks for when the the lift joystick
+		//is not being moved
 		if (abs(L1) <= deadzone){
+			//Sets lift error to tartget value (set from moving the lift,
+			//but by defult is 0) minus its current position
 			liftError = liftTarget - Lift.get_position();
+
+			//If error is nothing stops moving lift to prevent unnecisarry
+			//movement of the lift
 			if (abs(liftError) == 0){
 				liftError = 0;
 			}
+
+			//Sets lift adjustment power to the error times the constant
+			//of proportion
 			L1 = liftError * lift_Kp;
 			Lift.move(L1);
 		}
+
+		//Checks for when the joysticks are being moved past the deadzones
 		else if (abs(L1) > deadzone){
+			//Moves the lift corrisponding to the joystick position
 			Lift.move(L1);
+
+			//Sets lift target to its current position
 			liftTarget = Lift.get_position();
 		}
 
+		//Dont wanna stress out the poor brain do we
 		delay(20);
 	}
 }

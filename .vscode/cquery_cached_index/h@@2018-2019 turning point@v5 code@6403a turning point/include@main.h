@@ -39,6 +39,8 @@
 /**
  * You should add more #includes here
  */
+
+using namespace std;
 //#include "okapi/api.hpp"
 //#include "pros/api_legacy.h"
 
