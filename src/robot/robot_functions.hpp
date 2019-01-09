@@ -43,7 +43,7 @@ void shootPuncher (bool intake = false);
 void liftControl (void*);
 void lift (int target);
 void flip();
-void drive (std::string direction, float target, float waitTime, int maxPower = 100);
+void drive (std::string direction, float target, float waitTime, int maxPower = 115);
 
 //Auton Selection Functions
 int getAutonomous();
