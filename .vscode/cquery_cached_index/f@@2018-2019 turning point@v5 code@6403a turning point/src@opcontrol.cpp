@@ -40,6 +40,7 @@ void opcontrol() {
 
 	//Infinate loop for usercontrol
 	while (true) {
+		lcd::set_text(1, to_string((abs(leftEncoderSum()) + abs(rightEncoderSum())/4)));
 
 		// Check deadzones for base control
 		if (abs(master.get_analog(ANALOG_LEFT_X)) > deadzone)
@@ -94,6 +95,10 @@ void opcontrol() {
 		// Intake Control
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
 			Intake.move(127);
+			lcd::set_text(1, to_string(FrontLeftDrive.get_actual_velocity()));
+			lcd::set_text(2, to_string(FrontRightDrive.get_actual_velocity()));
+			lcd::set_text(3, to_string(BackLeftDrive.get_actual_velocity()));
+			lcd::set_text(4, to_string(BackRightDrive.get_actual_velocity()));
 		}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_L1)){
 			Intake.move(-127);
@@ -186,7 +191,7 @@ void opcontrol() {
 
 			//If error is nothing stops moving lift to prevent unnecisarry
 			//movement of the lift
-			if (abs(liftError) == 0){
+			if (abs(liftError) < 5){
 				liftError = 0;
 			}
 

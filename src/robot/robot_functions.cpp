@@ -8,11 +8,10 @@
 int inchToTicks (float inch){
   //Define return variable
   int ticks;
-  //For every 72 ticks, the robot has moved 1" forward or backward
-  const int conversionFactor = 72;
-  //Multiply the desiered inch time conversion rate and time by
-  //4 because four encoders are being compared
-  ticks = inch * conversionFactor * 4;
+  //For every 70 ticks, the robot has moved 1" forward or backward
+  const int conversionFactor = 70;
+  //Multiply the desiered inch by conversion rate
+  ticks = inch * conversionFactor;
 
   //Return the number of ticks
   return ticks;
@@ -22,11 +21,10 @@ int inchToTicks (float inch){
 int inchToTickStrafe (float inch){
   //Define return variable
   int ticks;
-  //For every 72 ticks, the robot has moved 1" lateraly
+  //For every 127 ticks, the robot has moved 1" lateraly
   const int conversionFactor = 127;
-  //Multiply the desiered inch time conversion rate and time by
-  //4 because four encoders are being compared
-  ticks = inch * conversionFactor * 4;
+  //Multiply the desiered inch by conversion rate
+  ticks = inch * conversionFactor;
 
   //Return the number of ticks
   return ticks;
@@ -378,7 +376,7 @@ void drive (string direction, float target, float waitTime, int maxPower){
   const float Kp = 0.2;
   const float Kp_C = 1;
   const float Ki = 0.1;
-  const float Kd = 0.5;
+  const float Kd = 0.4;
 
   //Constants for Turing
   const float Kp_turn = 0.2;
@@ -398,12 +396,12 @@ void drive (string direction, float target, float waitTime, int maxPower){
   float proportion_drift;
 
   //Intigral Limits
-  const float integralPowerLimit = 10 / Ki;
+  const float integralPowerLimit = 20 / Ki;
   const float integralActiveZone = inchToTicks(3);
 
   //Final Power
   int finalPower;
-  int minPower = 15;
+  const int minPower = 15;
 
   //Initialize Sensors and Timers
   bool timerLock = true;
@@ -416,12 +414,16 @@ void drive (string direction, float target, float waitTime, int maxPower){
     waitTime = 250;
   }
 
+  //TESTING
+  int maxLeftPower = 0;
+  int maxRightPower = 0;
+
   //Check for axial movement
   if (direction == "north" || direction == "south"){
     //Infinate loop
     while (true){
       //Proportion control
-      error = inchToTicks(target) - (leftEncoderSum() + rightEncoderSum());
+      error = inchToTicks(target) - ((leftEncoderSum() + rightEncoderSum())/4);
       proportion = Kp * error;
 
       //Drift control
@@ -429,7 +431,7 @@ void drive (string direction, float target, float waitTime, int maxPower){
       proportion_drift = Kp_C * error_drift;
 
       //Integral control
-      if (fabs(error) < integralActiveZone && error > 5)
+      if (fabs(error) < integralActiveZone && error != 0)
       integralRaw = integralRaw + error;
       else
       integralRaw = 0;
@@ -453,8 +455,8 @@ void drive (string direction, float target, float waitTime, int maxPower){
       if (abs(finalPower) > maxPower){
         finalPower = maxPower;
       }
-      else {
-        finalPower = sgn(finalPower) * (abs(finalPower) + 15);
+      else if (abs(finalPower) < 20){
+        finalPower = 20;
       }
 
       //Move motors
@@ -463,7 +465,13 @@ void drive (string direction, float target, float waitTime, int maxPower){
       else if (direction == "south")
       driveSet(-finalPower - proportion_drift, -finalPower + proportion_drift);
 
-      //When where is 100 error left (1.0") start the wait timer to end the loop
+      if ((finalPower - proportion_drift) > maxLeftPower){
+        maxLeftPower = finalPower - proportion_drift;
+      }
+      if ((finalPower + proportion_drift) > maxRightPower){
+        maxRightPower = finalPower + proportion_drift;
+      }
+      //When where is 100 error left (0.3") start the wait timer to end the loop
       if (error < 100){
         timerLock = false;
       }
@@ -544,7 +552,7 @@ void drive (string direction, float target, float waitTime, int maxPower){
   if (direction == "east" || direction == "west"){
     while(true){
       //Proportion control
-      error = inchToTickStrafe(target) - (leftEncoderSum() + rightEncoderSum());
+      error = inchToTickStrafe(target) - ((leftEncoderSum() + rightEncoderSum())/4);
       proportion = Kp * error;
 
       //Drift control

@@ -12,11 +12,11 @@ void initialize() {
 	//Waits 2 seconds to properly calibrate the gyro
 	delay(2000);
 
-	//Displays which auton is selected
-	lcd::set_text(1, "Selected: " + getAutonomousName());
-	lcd::set_text(3, "A= Front");
-	lcd::set_text(4, "B= Back");
-	lcd::set_text(7, "F = Skills / Switch");
+	// //Displays which auton is selected
+	// lcd::set_text(1, "Selected: " + getAutonomousName());
+	// lcd::set_text(3, "A= Front");
+	// lcd::set_text(4, "B= Back");
+	// lcd::set_text(7, "F = Skills / Switch");
 }
 
 //Disabled method that executes when the robot is disabled

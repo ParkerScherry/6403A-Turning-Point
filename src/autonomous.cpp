@@ -10,41 +10,31 @@ void autonomous() {
 
   //All autons go here
   switch (getAutonomous()){
-    case 1:{
+    case 1:
       red_front();
-    }
-    case 2:{
+    case 2:
       red_back();
-    }
-    case 3:{
+    case 3:
       //Empty 3
-    }
-    case 4:{
+    case 4:
       //Empty 4
-    }
-    case 5:{
+    case 5:
       //Empty 5
-    }
-    case 6:{
+    case 6:
       skills();
-    }
-    case 7:{
+    case 7:
       blue_front();
-    }
-    case 8:{
+    case 8:
       blue_back();
-    }
-    case 9:{
+    case 9:
       //Empty 9
-    }
-    case 10:{
+    case 10:
       //Empty 10
-    }
-    case 11:{
+    case 11:
       //Empty 11
-    }
-    case 12:{
+    case 12:
       test();
-    }
   }
+  liftTask.suspend();
+  reloadPuncherAutonTask.suspend();
 }
