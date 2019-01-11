@@ -18,6 +18,7 @@ void opcontrol() {
 	// Drive reversal and flipper control variables
 	bool driveDirection = true;
 	bool toggleFlip = false;
+	bool toggleFlipHold = true;
 	int flipperPower = 0;
 
 	// Proportion lift control variables
@@ -60,37 +61,11 @@ void opcontrol() {
 		else
 		L1 = 0;
 
-		// Check for drive direction update
-		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && driveDirection &&
-		ButtonPressTimer.getTime() > _buttonPressTime){
-			// Change drive direction to reverse
-			driveDirection = false;
-
-			// Reset button press timer
-			ButtonPressTimer.resetTimer();
-		}
-		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !driveDirection &&
-		ButtonPressTimer.getTime() > _buttonPressTime){
-			// Normalizes the drive direciton
-			driveDirection = true;
-
-			// Reset button press timer
-			ButtonPressTimer.resetTimer();
-		}
-
 		// Set base and lift motors accordinly
-		if (driveDirection){
-			FrontLeftDrive.move(Y1 + X2 + X1);
-			FrontRightDrive.move(Y1 - X2 - X1);
-			BackLeftDrive.move(Y1 - X2 + X1);
-			BackRightDrive.move(Y1 + X2 - X1);
-		}
-		else if (!driveDirection){
-			FrontLeftDrive.move(-(Y1 + X2 - X1));
-			FrontRightDrive.move(-(Y1 - X2 + X1));
-			BackLeftDrive.move(-(Y1 - X2 - X1));
-			BackRightDrive.move(-(Y1 + X2 + X1));
-		}
+		FrontLeftDrive.move(Y1 + X2 + X1);
+		FrontRightDrive.move(Y1 - X2 - X1);
+		BackLeftDrive.move(Y1 - X2 + X1);
+		BackRightDrive.move(Y1 + X2 - X1);
 
 		// Intake Control
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
@@ -119,7 +94,7 @@ void opcontrol() {
 			SlueTimer.resetTimer();
 		}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && !toggleFlip &&
-	  ButtonPressTimer.getTime() > _buttonPressTime){
+		ButtonPressTimer.getTime() > _buttonPressTime){
 			//Set variable to unhold flipper
 			toggleFlip = true;
 
@@ -129,13 +104,35 @@ void opcontrol() {
 			SlueTimer.resetTimer();
 		}
 
+		if (master.get_digital(E_CONTROLLER_DIGITAL_A) && toggleFlipHold &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
+			//Set variable to unhold flipper
+			toggleFlipHold = false;
+
+			//Reset Timers
+			ButtonPressTimer.resetTimer();
+			FlipperControl.resetTimer();
+			SlueTimer.resetTimer();
+		}
+		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !toggleFlipHold &&
+		ButtonPressTimer.getTime() > _buttonPressTime){
+			//Set variable to unhold flipper
+			toggleFlipHold = true;
+
+			//Reset Timers
+			ButtonPressTimer.resetTimer();
+			FlipperControl.resetTimer();
+			SlueTimer.resetTimer();
+		}
+
 		//Checks if flipper needs to go up
 		if (toggleFlip){
-			//Uses timer to move up for 500 ms
-			if(FlipperControl.getTime() < 500){
+			//Uses timer to move up for 750 ms
+			if(FlipperControl.getTime() < 750){
 				//Moves motor full power
 				Flipper.move(127);
 			}
+
 			//Holds flipper at the top after flip
 			else{
 				//Sets the flipper power to slue timer, which
@@ -160,25 +157,23 @@ void opcontrol() {
 			//loss of currents
 			flipperPower = SlueTimer.getTime() - 60;
 
-			//Sets flipper power limit
-			if (SlueTimer.getTime() >= 60){
-				flipperPower = 0;
-			}
-
 			//Check if the lift is being raised and pitches the
 			//flipper at an agle to keep from sliding off
-			if (Lift.get_position() > 40){
+			if (Lift.get_position() > 40 && toggleFlipHold){
 				//Calcuate the flip error from the set target value
 				flipError = flipTarget - Flipper.get_position();
 
 				//Move the flipper accordingly and reset slue timer
-				Flipper.move(flipError * flip_Kp);
+				flipperPower = flipError * flip_Kp;
 				SlueTimer.resetTimer();
 			}
-			//Moves flipper normaly because there is no hold
-			else{
-				Flipper.move(flipperPower);
+
+			//Sets flipper power limit
+			else if (SlueTimer.getTime() >= 60){
+				flipperPower = 0;
 			}
+
+			Flipper.move(flipperPower);
 		}
 
 		//Proportional lift control that holds the lift where
@@ -208,6 +203,11 @@ void opcontrol() {
 
 			//Sets lift target to its current position
 			liftTarget = Lift.get_position();
+		}
+
+		//Resets flipper hold when the lift moves all the way down
+		if (Lift.get_position() < 40){
+			toggleFlipHold = true;
 		}
 
 		//Dont wanna stress out the poor brain do we

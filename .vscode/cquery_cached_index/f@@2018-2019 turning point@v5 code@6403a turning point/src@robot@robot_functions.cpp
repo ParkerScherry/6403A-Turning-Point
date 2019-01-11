@@ -188,7 +188,7 @@ void reloadPuncherAuton(void*){
 
       //Checks if the intake was running and turns it on
       if (autoIntake){
-        Intake.move(127);
+        Intake.move(80);
       }
 
       //Runs the puncher until the current draw dips and
@@ -232,10 +232,9 @@ void reloadPuncherAuton(void*){
       if (autoIntake){
         Intake.move(0);
       }
-
-      //Reset reload variable
-      reload = false;
     }
+    //Reset reload variable
+    reload = false;
 
     //Dont wanna stress out the poor brain do we
     delay(20);
@@ -305,7 +304,7 @@ void lift (int target){
   liftTarget = target;
 }
 
-void flip (){
+void flip (bool moveDown){
   //Initialize variables and reset timers
   int flipperPower = 0;
   Timer FlipperControl = Timer();
@@ -368,6 +367,9 @@ void flip (){
     //Reverses bool value
     toggleFlip = true;
   }
+  if (moveDown){
+    Flipper.move(0);
+  }
 }
 
 //The PID contorl function
@@ -409,10 +411,10 @@ void drive (string direction, float target, float waitTime, int maxPower){
   Timer endLoopTimer = Timer();
   endLoopTimer.resetTimer();
 
-  //Set minimum wait time
-  if (waitTime <= 250){
-    waitTime = 250;
-  }
+  // //Set minimum wait time
+  // if (waitTime <= 250){
+  //   waitTime = 250;
+  // }
 
   //TESTING
   int maxLeftPower = 0;

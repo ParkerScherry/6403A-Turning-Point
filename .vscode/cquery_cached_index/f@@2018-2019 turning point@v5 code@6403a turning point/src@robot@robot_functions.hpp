@@ -42,7 +42,7 @@ void reloadPuncherAuton (void*);
 void shootPuncher (bool intake = false);
 void liftControl (void*);
 void lift (int target);
-void flip();
+void flip(bool moveDown = false);
 void drive (std::string direction, float target, float waitTime, int maxPower = 115);
 
 //Auton Selection Functions

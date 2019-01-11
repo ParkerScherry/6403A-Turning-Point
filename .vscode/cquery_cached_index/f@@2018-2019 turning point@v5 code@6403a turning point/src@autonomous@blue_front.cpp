@@ -1,8 +1,8 @@
 #include "main.h"
 #include "../robot/motors.h"
 #include "../robot/robot_functions.hpp"
-#include "headers/test.h"
+#include "headers/blue_front.h"
 
-void test (){
-
+void blue_front (){
+  
 }

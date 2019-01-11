@@ -4,5 +4,5 @@
 #include "headers/red_back.h"
 
 void red_back (){
-  drive(north, 28, 250, 120);
+  
 }
