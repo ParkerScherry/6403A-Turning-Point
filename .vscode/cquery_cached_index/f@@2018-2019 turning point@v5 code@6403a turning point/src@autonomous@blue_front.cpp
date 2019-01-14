@@ -1,10 +1,8 @@
 #include "main.h"
 #include "../robot/motors.h"
 #include "../robot/robot_functions.hpp"
-#include "headers/test.h"
+#include "headers/blue_front.h"
 
-void test (){
-  deployFlip();
-  lift(500, 127);
-  delay(10000);
+void blue_front (){
+  
 }

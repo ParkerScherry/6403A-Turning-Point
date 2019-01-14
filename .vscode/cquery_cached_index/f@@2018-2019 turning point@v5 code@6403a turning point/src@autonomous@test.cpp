@@ -4,6 +4,7 @@
 #include "headers/test.h"
 
 void test (){
-  drive("left", 90, 500);
-  drive("right", 45, 500);
+  deployFlip();
+  lift(500, 127);
+  delay(10000);
 }

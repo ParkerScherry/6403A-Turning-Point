@@ -11,7 +11,7 @@
 #define Lift_Port (3)
 #define Intake_Port (20)
 #define Puncher_Port (6)
-#define Flipper_Port (14)
+#define Flipper_Port (16)
 #define Gyro_Port ('H')
 #define DgtlA_Port ('A')
 #define DgtlB_Port ('B')
