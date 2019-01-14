@@ -161,7 +161,7 @@ void reloadPuncher(void*){
         Puncher.move(127);
 
         //Checks if needs to break out of loop
-        if (fabs(Puncher.get_position()) > 825)
+        if (fabs(Puncher.get_position()) > 830)
         break;
 
         //Dont wanna stress out the poor brain dont we
@@ -218,7 +218,7 @@ void reloadPuncherAuton(void*){
         Puncher.move(127);
 
         //Checks if needs to break out of loop
-        if (fabs(Puncher.get_position()) > 825)
+        if (fabs(Puncher.get_position()) > 830)
         break;
 
         //Dont wanna stress out the poor brain dont we
@@ -251,57 +251,105 @@ void shootPuncher (bool intake){
 //Proportional lift control that holds the lift where
 //it was last left at. Uses the lift target variable to control
 int liftTarget = 0;
+int maxLiftSpeed = 0;
 bool toggleFlip = true;
+bool flipperHold = false;
+bool firstTimeMove = false;
+bool deployFlipper = false;
+Timer endLoopTimer = Timer();
+
 void liftControl (void*){
   // Proportion lift control variables
   int liftError = 0;
   int liftPower = 0;
   float lift_Kp = 0.5;
+  int minLiftSpeed = 30;
+  bool timerLock = true;
+  endLoopTimer.resetTimer();
 
   // Proportion flipper hold control variables
   int flipError = 0;
-  int flipTarget = 30;
+  int flipTarget = 200;
   float flip_Kp = 0.5;
 
   //Infite loop to constantly check if lift needs to be moved
   while(true){
-    //Sets lift error to tartget value (set from moving the lift,
-    //but by defult is 0) minus its current position
-    liftError = liftTarget - Lift.get_position();
-
-    //If error is nothing stops moving lift to prevent unnecisarry
-    //movement of the lift
-    if (abs(liftError) == 0){
-      liftError = 0;
-    }
-
-    //Sets lift adjustment power to the error times the constant
-    //of proportion
-    liftPower = liftError * lift_Kp;
-    Lift.move(liftPower);
-
-    //Check if the lift is being raised and pitches the
-    //flipper at an agle to keep from sliding off
-    if (Lift.get_position() > 40 && toggleFlip){
-      //Calcuate the flip error from the set target value
-      flipError = flipTarget - Flipper.get_position();
-
-      //Move the flipper accordingly
-      Flipper.move(flipError * flip_Kp);
-    }
-    //Turns off flipper when lift is down and flipper is not up
-    else if (toggleFlip){
+    if (deployFlipper){
+      Flipper.move(127);
+      delay(100);
+      deployFlipper = false;
       Flipper.move(0);
     }
+    if (endLoopTimer.getTime() < 500){
+      liftError = liftTarget - Lift.get_position();
 
+      liftPower = liftError * lift_Kp;
+      if (liftPower > maxLiftSpeed){
+        liftPower = maxLiftSpeed;
+      }
+      else if (liftPower < -maxLiftSpeed){
+        liftPower = -maxLiftSpeed;
+      }
+      if (liftPower < minLiftSpeed){
+        liftPower = minLiftSpeed;
+      }
+      else if (liftPower < -minLiftSpeed){
+        liftPower = -minLiftSpeed;
+      }
+
+      lcd::set_text(2, "Lift should have moved: " + to_string(liftPower));
+      Lift.move(liftPower);
+
+      if (abs(liftError) < 50){
+        timerLock = false;
+      }
+
+      if (timerLock){
+        lcd::set_text(6, "Timer reset!");
+        endLoopTimer.resetTimer();
+      }
+    }
+    else{
+      lcd::set_text(4, "else ran");
+      liftError = liftTarget - Lift.get_position();
+      //Sets lift adjustment power to the error times the constant
+      //of proportion
+      liftPower = liftError * lift_Kp;
+
+      if (liftPower > 0){
+        liftPower = 20;
+      }
+      else if (liftPower < 0){
+        liftPower = -20;
+      }
+
+      Lift.move(liftPower);
+
+      //Check if the lift is being raised and pitches the
+      //flipper at an agle to keep from sliding off
+      if (flipperHold){
+        //Calcuate the flip error from the set target value
+        flipError = flipTarget - Flipper.get_position();
+
+        //Move the flipper accordingly
+        Flipper.move(flipError * flip_Kp);
+      }
+      //Turns off flipper when lift is down and flipper is not up
+      else{
+        Flipper.move(0);
+      }
+    }
+    lcd::set_text(7, to_string(Lift.get_position()));
     //Dont wanna stress out the poor brain now do we
-    delay(100);
+    delay(50);
   }
 }
 
 //Controls the lift through changing the target value
-void lift (int target){
+void lift (int target, int speed){
   liftTarget = target;
+  maxLiftSpeed = speed;
+  endLoopTimer.resetTimer();
 }
 
 void flip (bool moveDown){
@@ -369,7 +417,16 @@ void flip (bool moveDown){
   }
   if (moveDown){
     Flipper.move(0);
+    toggleFlip = true;
   }
+}
+
+void holdFlip (bool boolVal){
+  flipperHold = boolVal;
+}
+
+void deployFlip (){
+  deployFlipper = true;
 }
 
 //The PID contorl function

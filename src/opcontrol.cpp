@@ -41,7 +41,7 @@ void opcontrol() {
 
 	//Infinate loop for usercontrol
 	while (true) {
-		lcd::set_text(1, to_string((abs(leftEncoderSum()) + abs(rightEncoderSum())/4)));
+		lcd::set_text(1, to_string(Lift.get_position()));
 
 		// Check deadzones for base control
 		if (abs(master.get_analog(ANALOG_LEFT_X)) > deadzone)
