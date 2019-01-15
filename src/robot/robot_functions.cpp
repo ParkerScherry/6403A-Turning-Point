@@ -104,18 +104,18 @@ string getAutonomousName(){
   //Check each case for the variable returned from the
   //function and sets a respective name for it
   switch (getAutonomous()){
-    case 1: myAutonomousName = "Red Front";
-    case 2: myAutonomousName = "Red Back";
-    case 3: myAutonomousName = "Empty 3";
-    case 4: myAutonomousName = "Empty 4";
-    case 5: myAutonomousName = "Empty 5";
-    case 6: myAutonomousName = "Skills";
-    case 7: myAutonomousName = "Blue Front";
-    case 8: myAutonomousName = "Blue Back";
-    case 9: myAutonomousName = "Empty 9";
-    case 10: myAutonomousName = "Empty 10";
-    case 11: myAutonomousName = "Empty 11";
-    case 12: myAutonomousName = "Test";
+    case 1: myAutonomousName = "Red Front"; break;
+    case 2: myAutonomousName = "Red Back"; break;
+    case 3: myAutonomousName = "Empty 3"; break;
+    case 4: myAutonomousName = "Empty 4"; break;
+    case 5: myAutonomousName = "Empty 5"; break;
+    case 6: myAutonomousName = "Skills"; break;
+    case 7: myAutonomousName = "Blue Front"; break;
+    case 8: myAutonomousName = "Blue Back"; break;
+    case 9: myAutonomousName = "Empty 9"; break;
+    case 10: myAutonomousName = "Empty 10"; break;
+    case 11: myAutonomousName = "Empty 11"; break;
+    case 12: myAutonomousName = "Test"; break;
   }
   //Return the variable
   return myAutonomousName;
@@ -280,6 +280,7 @@ void liftControl (void*){
       deployFlipper = false;
       Flipper.move(0);
     }
+
     if (endLoopTimer.getTime() < 500){
       liftError = liftTarget - Lift.get_position();
 
@@ -297,7 +298,6 @@ void liftControl (void*){
         liftPower = -minLiftSpeed;
       }
 
-      lcd::set_text(2, "Lift should have moved: " + to_string(liftPower));
       Lift.move(liftPower);
 
       if (abs(liftError) < 50){
@@ -305,12 +305,10 @@ void liftControl (void*){
       }
 
       if (timerLock){
-        lcd::set_text(6, "Timer reset!");
         endLoopTimer.resetTimer();
       }
     }
     else{
-      lcd::set_text(4, "else ran");
       liftError = liftTarget - Lift.get_position();
       //Sets lift adjustment power to the error times the constant
       //of proportion
@@ -323,6 +321,9 @@ void liftControl (void*){
         liftPower = -20;
       }
 
+      if (Lift.get_position() < 20){
+        liftPower = 0;
+      }
       Lift.move(liftPower);
 
       //Check if the lift is being raised and pitches the
@@ -431,7 +432,7 @@ void deployFlip (){
 
 //The PID contorl function
 void drive (string direction, float target, float waitTime, int maxPower){
-  //Constants for Axial Movement
+  //Constants for Axial and Lateral Movement
   const float Kp = 0.2;
   const float Kp_C = 1;
   const float Ki = 0.1;

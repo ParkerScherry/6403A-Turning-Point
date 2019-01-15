@@ -41,7 +41,11 @@ void opcontrol() {
 
 	//Infinate loop for usercontrol
 	while (true) {
-		lcd::set_text(1, to_string(Lift.get_position()));
+		//Displays which auton is selected
+		lcd::set_text(1, "Selected: " + getAutonomousName());
+		lcd::set_text(3, "A= Front");
+		lcd::set_text(4, "B= Back");
+		lcd::set_text(7, "F = Skills / Switch");
 
 		// Check deadzones for base control
 		if (abs(master.get_analog(ANALOG_LEFT_X)) > deadzone)

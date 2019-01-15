@@ -34,9 +34,9 @@ void red_front (){
   drive(north, 12, 10);
   drive(south, 22, 10);
   drive("right", 20, 250);
-  Intake.move(-127);
-  delay(200);
-  Intake.move(0);
+  // Intake.move(-127);
+  // delay(200);
+  // Intake.move(0);
   shootPuncher();
-  delay(2000);
+  delay(250);
 }
