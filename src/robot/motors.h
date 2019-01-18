@@ -8,7 +8,7 @@
 #define FrontRightDrive_Port (10)
 #define BackLeftDrive_Port (15)
 #define BackRightDrive_Port (1)
-#define Lift_Port (3)
+#define Lift_Port (2)
 #define Intake_Port (20)
 #define Puncher_Port (6)
 #define Flipper_Port (16)

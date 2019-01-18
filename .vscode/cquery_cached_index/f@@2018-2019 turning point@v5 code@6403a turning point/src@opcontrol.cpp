@@ -47,7 +47,7 @@ void opcontrol() {
 		lcd::set_text(4, "B= Back");
 		lcd::set_text(7, "F = Skills / Switch");
 
-		// Check deadzones for base control
+		// Check deadzones for base and lift control
 		if (abs(master.get_analog(ANALOG_LEFT_X)) > deadzone)
 		X1 = master.get_analog(ANALOG_LEFT_X);
 		else
@@ -74,10 +74,6 @@ void opcontrol() {
 		// Intake Control
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R1)){
 			Intake.move(127);
-			lcd::set_text(1, to_string(FrontLeftDrive.get_actual_velocity()));
-			lcd::set_text(2, to_string(FrontRightDrive.get_actual_velocity()));
-			lcd::set_text(3, to_string(BackLeftDrive.get_actual_velocity()));
-			lcd::set_text(4, to_string(BackRightDrive.get_actual_velocity()));
 		}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_L1)){
 			Intake.move(-127);
@@ -89,7 +85,7 @@ void opcontrol() {
 		//Flipper Control
 		if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && toggleFlip &&
 		ButtonPressTimer.getTime() > _buttonPressTime){
-			//Set variable to unhold flipper
+			//Set variable to flip
 			toggleFlip = false;
 
 			//Reset Timers
@@ -99,7 +95,7 @@ void opcontrol() {
 		}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_R2) && !toggleFlip &&
 		ButtonPressTimer.getTime() > _buttonPressTime){
-			//Set variable to unhold flipper
+			//Set variable to unflip
 			toggleFlip = true;
 
 			//Reset Timers
@@ -120,7 +116,7 @@ void opcontrol() {
 		}
 		else if (master.get_digital(E_CONTROLLER_DIGITAL_A) && !toggleFlipHold &&
 		ButtonPressTimer.getTime() > _buttonPressTime){
-			//Set variable to unhold flipper
+			//Set variable to hold flipper
 			toggleFlipHold = true;
 
 			//Reset Timers

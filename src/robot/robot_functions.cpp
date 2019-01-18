@@ -125,6 +125,7 @@ string getAutonomousName(){
 
 bool reload = false;
 bool autoIntake = false;
+
 //The main medthod for the auto reload control
 void reloadPuncher(void*){
   //Start an infinate loop to check for new button press
@@ -263,7 +264,7 @@ void liftControl (void*){
   int liftError = 0;
   int liftPower = 0;
   float lift_Kp = 0.5;
-  int minLiftSpeed = 30;
+  int minLiftSpeed = 80;
   bool timerLock = true;
   endLoopTimer.resetTimer();
 
@@ -291,13 +292,16 @@ void liftControl (void*){
       else if (liftPower < -maxLiftSpeed){
         liftPower = -maxLiftSpeed;
       }
-      if (liftPower < minLiftSpeed){
+      else if (liftPower < minLiftSpeed){
         liftPower = minLiftSpeed;
       }
-      else if (liftPower < -minLiftSpeed){
-        liftPower = -minLiftSpeed;
+      else if (liftPower < -60){
+        liftPower = -60;
       }
 
+      if (liftTarget == 0){
+        liftPower = 0;
+      }
       Lift.move(liftPower);
 
       if (abs(liftError) < 50){
@@ -326,19 +330,19 @@ void liftControl (void*){
       }
       Lift.move(liftPower);
 
-      //Check if the lift is being raised and pitches the
-      //flipper at an agle to keep from sliding off
-      if (flipperHold){
-        //Calcuate the flip error from the set target value
-        flipError = flipTarget - Flipper.get_position();
-
-        //Move the flipper accordingly
-        Flipper.move(flipError * flip_Kp);
-      }
-      //Turns off flipper when lift is down and flipper is not up
-      else{
-        Flipper.move(0);
-      }
+      // //Check if the lift is being raised and pitches the
+      // //flipper at an agle to keep from sliding off
+      // if (flipperHold){
+      //   //Calcuate the flip error from the set target value
+      //   flipError = flipTarget - Flipper.get_position();
+      //
+      //   //Move the flipper accordingly
+      //   Flipper.move(flipError * flip_Kp);
+      // }
+      // //Turns off flipper when lift is down and flipper is not up
+      // else{
+      //   Flipper.move(0);
+      // }
     }
     lcd::set_text(7, to_string(Lift.get_position()));
     //Dont wanna stress out the poor brain now do we
@@ -363,8 +367,8 @@ void flip (bool moveDown){
 
   //Checks if flipper needs to go up
   if (toggleFlip){
-    //Uses timer to move up for 500 ms
-    while(FlipperControl.getTime() < 500){
+    //Uses timer to move up for 700 ms
+    while(FlipperControl.getTime() < 700){
       //Moves motor full power
       Flipper.move(127);
 
@@ -372,31 +376,14 @@ void flip (bool moveDown){
       delay(10);
     }
 
-    //Holds flipper at the top after flip
-    while(flipperPower != 750){
-      //Sets the flipper power to slue timer, which
-      //slowly ramps up the motor hold power to prevent
-      //motor and port burnout from exessive current
-      flipperPower = SlueTimer.getTime() * 3;
+    Flipper.move_voltage(900);
 
-      //Sets a limit to the flipper power
-      if (flipperPower > 750){
-        flipperPower = 750;
-      }
-
-      //Moves the flipper motor through volate to limit
-      //the torque output
-      Flipper.move_voltage(flipperPower);
-
-      //Dont wanna over load the poor cortex now do we
-      delay(10);
-    }
     //Reverses bool value
     toggleFlip = false;
   }
 
   //Moves the flipper down
-  else if (!toggleFlip){
+  else {
     //Slue flipper movement down to prevent an imediate
     //loss of currents
     while (SlueTimer.getTime() <= 60){
@@ -430,6 +417,10 @@ void deployFlip (){
   deployFlipper = true;
 }
 
+bool resetGyro = true;
+void changeBool(bool boolVal){
+  resetGyro = boolVal;
+}
 //The PID contorl function
 void drive (string direction, float target, float waitTime, int maxPower){
   //Constants for Axial and Lateral Movement
@@ -465,7 +456,15 @@ void drive (string direction, float target, float waitTime, int maxPower){
 
   //Initialize Sensors and Timers
   bool timerLock = true;
-  resetSensors();
+  if (resetGyro){
+    resetSensors();
+  }
+  else{
+    FrontLeftDrive.set_zero_position(0);
+    BackRightDrive.set_zero_position(0);
+    FrontRightDrive.set_zero_position(0);
+    BackLeftDrive.set_zero_position(0);
+  }
   Timer endLoopTimer = Timer();
   endLoopTimer.resetTimer();
 
@@ -525,12 +524,6 @@ void drive (string direction, float target, float waitTime, int maxPower){
       else if (direction == "south")
       driveSet(-finalPower - proportion_drift, -finalPower + proportion_drift);
 
-      if ((finalPower - proportion_drift) > maxLeftPower){
-        maxLeftPower = finalPower - proportion_drift;
-      }
-      if ((finalPower + proportion_drift) > maxRightPower){
-        maxRightPower = finalPower + proportion_drift;
-      }
       //When where is 100 error left (0.3") start the wait timer to end the loop
       if (error < 100){
         timerLock = false;
