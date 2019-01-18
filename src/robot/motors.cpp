@@ -7,7 +7,7 @@ Motor FrontLeftDrive (FrontLeftDirve_Port, E_MOTOR_GEARSET_18, true, E_MOTOR_ENC
 Motor FrontRightDrive (FrontRightDrive_Port, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
 Motor BackLeftDrive (15, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
 Motor BackRightDrive (BackRightDrive_Port, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_COUNTS);
-Motor Lift (Lift_Port, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
+Motor Lift (2, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
 Motor Intake (Intake_Port, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_COUNTS);
 Motor Puncher (Puncher_Port, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_DEGREES);
 Motor Flipper (16, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_DEGREES);

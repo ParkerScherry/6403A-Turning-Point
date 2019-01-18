@@ -32,7 +32,7 @@ int percentToMotorValue (int percent);
 
 //Helper Functions
 void resetSensors();
-void driveSet();
+void driveSet(int leftSpeed, int rightSpeed);
 int rightEncoderSum();
 int leftEncoderSum();
 
@@ -45,6 +45,7 @@ void lift (int target, int speed = 127);
 void flip(bool moveDown = false);
 void holdFlip (bool bolVal);
 void deployFlip ();
+void changeBool(bool boolVal);
 void drive (std::string direction, float target, float waitTime, int maxPower = 115);
 
 //Auton Selection Functions

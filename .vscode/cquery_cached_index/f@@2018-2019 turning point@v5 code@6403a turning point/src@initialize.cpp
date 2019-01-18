@@ -11,18 +11,22 @@ void initialize() {
 
 	//Waits 2 seconds to properly calibrate the gyro
 	delay(2000);
-
-	// //Displays which auton is selected
-	// lcd::set_text(1, "Selected: " + getAutonomousName());
-	// lcd::set_text(3, "A= Front");
-	// lcd::set_text(4, "B= Back");
-	// lcd::set_text(7, "F = Skills / Switch");
 }
 
 //Disabled method that executes when the robot is disabled
 //via competition control, this displays which auton is
 //selected and shows a map for each one
-void disabled() {}
+void disabled() {
+	while(true){
+		//Displays which auton is selected
+		lcd::set_text(1, "Selected: " + getAutonomousName());
+		lcd::set_text(3, "A= Front");
+		lcd::set_text(4, "B= Back");
+		lcd::set_text(7, "F = Skills / Switch");
+
+		delay(100);
+	}
+}
 
 //Competition initialize method which runs when robot
 //first starts and is competition enabled

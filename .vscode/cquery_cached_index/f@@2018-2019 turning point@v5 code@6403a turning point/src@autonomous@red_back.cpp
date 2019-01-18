@@ -4,15 +4,24 @@
 #include "headers/red_back.h"
 
 void red_back (){
+  //wait 5 seconds and shoot ball
+  delay(1);
+  shootPuncher();
+  delay(400);
+
+  //drive and pick up ball
+  drive("right", 50, 250);
+  Intake.move(80);
+  drive(north, 39, 250);
+
+  //turn and flip cap
+  drive("left", 120, 250);
+  drive(south, 12, 250);
   flip(true);
-  drive(south, 31, 500);
-  holdFlip(true);
-  lift(70, 60);
-  delay(250);
-  drive(north, 28, 500);
-  lift(650, 80);
-  drive("right", 97, 500);
-  drive(south, 23, 500);
-  holdFlip(false);
-  lift(530, -20);
+
+  //park
+  drive("right", 22, 250);
+  drive(west, 5, 500);
+  drive(north, 52, 500);
+
 }
